@@ -16,7 +16,7 @@ public class Environment
     private static final int SCREEN_WIDTH = 1000;
     private static final int SCREEN_HEIGHT = 800;
     //private static final  Color BACK_COLOR = new Color(229, 209, 192);
-    private static final  Color BACK_COLOR = Color.BLACK;
+    private static final  Color BACK_COLOR = Color.WHITE;
     private static final  Color INFO_COLOR = new Color(255, 255, 255);
 
     private static JFrame frame;
