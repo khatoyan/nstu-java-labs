@@ -9,8 +9,8 @@ import java.io.IOException;
 
 public abstract class Employees {
 
-    protected static int IMAGE_WIDTH = 120;
-    protected static int IMAGE_HEIGHT = 80;
+    public static int IMAGE_WIDTH = 120;
+    public static int IMAGE_HEIGHT = 80;
 
     private int x;
     private int y;
