@@ -4,12 +4,12 @@ import javax.swing.*;
 
 public class Manager extends Employees implements IBehaviour {
 
+    public static int manLifeTime = 10;
     public static int countMan = 0;
     private int x;
     private int y;
 
     private final static String PATH = "src/Images/manager.png"; //Путь к изображению объекта
-    public JLabel LayObject; //Слой объекта который ложится на экран
     private ImageIcon imageObject = new ImageIcon(PATH); //Изобраение объекта
 
 

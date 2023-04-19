@@ -3,13 +3,12 @@ import javax.swing.*;
 
 public class Developer extends Employees implements IBehaviour {
 
-
+    public static int devLifeTime = 10;
     public static int countDev = 0;
     private int x;
     private int y;
 
     private final static String PATH = "src/Images/developer.png"; //Путь к изображению объекта
-    public final JLabel LayObject; //Слой объекта который ложится на экран
     private ImageIcon imageObject = new ImageIcon(PATH); //Изобраение объекта
 
     public Developer() {
