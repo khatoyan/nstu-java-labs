@@ -22,16 +22,20 @@ public class Environment
 
     private static final int SCREEN_WIDTH = 1000;
     private static final int SCREEN_HEIGHT = 800;
+
+    /* Цвета */
+
     private static final  Color BUTTON_COLOR =  new Color(50, 205, 50);
     private static final  Color BACK_COLOR =  new Color(64, 181, 173);
     private static final  Color HEADER_COLOR =  new Color(135, 206, 235);
     private static final  Color STOP_COLOR =  new Color(255, 79, 91);
     private static final  Color INFO_COLOR = new Color(159, 226, 191);
-    private final long simStartTime;
+    private static final  Color OBJ_COLOR = new Color(240, 230, 140);
 
     /* Изменяемые переменные */
 
-    private int generatePeriod = 1;
+    private final long simStartTime;
+    private int generatePeriod = 5;
     private int chanceOfBirth = 8;
     private int simTime;
     private boolean isAllowed = true;
@@ -41,6 +45,7 @@ public class Environment
 
     private Timer devTimer;
     private Timer manTimer;
+    private Timer simulationTimer;
 
     /* Коллекции данных */
 
@@ -64,6 +69,7 @@ public class Environment
 
     private final JButton startButton;
     private final JButton stopButton;
+    private final JButton showObjectsButton;
     private final JRadioButton showInfoButton;
     private final JRadioButton NotShowInfoButton;
     private final ButtonGroup switchButtons;
@@ -108,6 +114,7 @@ public class Environment
 
         startButton = new JButton("Start");
         stopButton = new JButton("Stop");
+        showObjectsButton = new JButton("Текущие объекты");
 
         NotShowInfoButton = new JRadioButton("Убрать текст", false);
         showInfoButton = new JRadioButton("Показать текст", true);
@@ -117,8 +124,6 @@ public class Environment
         devLifeTime = new JTextField( 25);
         manLifeTime = new JTextField( 25);
 
-        NotShowInfoButton.setBackground(HEADER_COLOR);
-        showInfoButton.setBackground(HEADER_COLOR);
 
         switchButtons.add(showInfoButton);
         switchButtons.add(NotShowInfoButton);
@@ -143,6 +148,7 @@ public class Environment
         buttonsPanel.setSize(800, 100);
         buttonsPanel.add(startButton);
         buttonsPanel.add(stopButton);
+        buttonsPanel.add(showObjectsButton);
         buttonsPanel.add(checkBox);
         buttonsPanel.add(showInfoButton);
         buttonsPanel.add(NotShowInfoButton);
@@ -195,11 +201,15 @@ public class Environment
 
         startButton.setBackground(BUTTON_COLOR);
         stopButton.setBackground(STOP_COLOR);
-        objectsPanel.setBackground(BACK_COLOR);
+        showObjectsButton.setBackground(OBJ_COLOR);
+        checkBox.setBackground(HEADER_COLOR);
         buttonsPanel.setBackground(HEADER_COLOR);
         devLifeTimeData.setBackground(HEADER_COLOR);
         manLifeTimeData.setBackground(HEADER_COLOR);
+        NotShowInfoButton.setBackground(HEADER_COLOR);
+        showInfoButton.setBackground(HEADER_COLOR);
         simTimeLabel.setBackground(BACK_COLOR);
+        objectsPanel.setBackground(BACK_COLOR);
 
         frame.setJMenuBar(menuBar);
         frame.getContentPane().add(mainPanel);
@@ -208,6 +218,287 @@ public class Environment
         frame.setVisible( true );
         frame.repaint();
         start();
+    }
+
+    void start() {
+        handleKeyActions();
+        changeSimTime();
+        clearTimer();
+    }
+
+    void deleteDeadObjects(long currTime) {
+
+        for (int i = 0; i < emplList.size(); i++) {
+            Employees obj = emplList.get(i);
+
+            if (obj.LayObject != null) {
+                if (currTime - obj.getCreateTime() >= Developer.devLifeTime*1000 && obj instanceof Developer) {
+                    objectsPanel.remove(obj.LayObject);
+                    emplList.remove(obj);
+                    IdList.remove(obj.getId());
+                    hashMap.remove(obj.getId());
+                }
+                if (currTime - obj.getCreateTime() >= Manager.manLifeTime*1000 && obj instanceof Manager) {
+                    objectsPanel.remove(obj.LayObject);
+                    emplList.remove(obj);
+                    IdList.remove(obj.getId());
+                    hashMap.remove(obj.getId());
+                }
+            }
+
+        }
+    }
+
+    public void changeSimTime() {
+        simulationTimer = new Timer(1000, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                long tmp = System.currentTimeMillis();
+                long dif = (tmp - simStartTime) / 1000;
+                simTime = (int)dif;
+                simTimeLabel.setText("Время симуляции: " + dif);
+                frame.repaint();
+            }
+        });
+
+        simulationTimer.start();
+    }
+
+    public void clearTimer() {
+
+        Timer clearTimer = new Timer(1000, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                deleteDeadObjects(System.currentTimeMillis());
+                frame.repaint();
+            }
+        });
+
+        clearTimer.start();
+    }
+
+    public int getRandomNumber(int min, int max) {
+        return (int) ((Math.random() * (max - min)) + min);
+    }
+
+    public int create(long time, int objType) {
+
+        if (!isAllowed) {
+            return -1;
+        }
+
+        int rand = (int) Math.ceil(Math.random() * 8);
+        int rand2 = (int) Math.ceil(Math.random() * 8);
+
+        if (rand < chanceOfBirth && objType == 1) {
+            var newObj = new Developer(
+                    getRandomNumber(0, objectsPanel.getWidth() - Employees.IMAGE_WIDTH),
+                    getRandomNumber(0,  objectsPanel.getHeight() - Employees.IMAGE_HEIGHT ));
+            emplList.add(newObj);
+            IdList.add(newObj.getId());
+            hashMap.put(newObj.getId(), ((int)(System.currentTimeMillis() - newObj.getCreateTime()))/1000);
+            objectsPanel.add(newObj.LayObject);
+            frame.repaint();
+        }
+
+        if (rand2 < chanceOfBirth && objType == 2) {
+
+            if (!isAllowed) {
+                return -1;
+            }
+
+            var newObj = new Manager(
+                    getRandomNumber(0, objectsPanel.getWidth() - Employees.IMAGE_WIDTH),
+                    getRandomNumber(0,  objectsPanel.getHeight() - Employees.IMAGE_HEIGHT ));
+
+            emplList.add(newObj);
+            IdList.add(newObj.getId());
+            hashMap.put(newObj.getId(), ((int)(System.currentTimeMillis() - simStartTime)/1000));
+            objectsPanel.add(newObj.LayObject);
+            objectsPanel.repaint();
+            frame.repaint();
+        }
+
+        if (emplList.size() > 50) isAllowed = false;
+
+        return 2;
+    }
+
+    void generate() {
+        var action = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (!isAllowed) return;
+                create(simStartTime, 1);
+            }
+        };
+
+        var manAction = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (!isAllowed) return;
+                create(simStartTime, 2);
+            }
+        };
+
+        devTimer = new Timer((generatePeriod*1000), action);
+        manTimer = new Timer((generatePeriod*1000), manAction);
+        devTimer.start();
+        manTimer.start();
+    }
+
+    void createDataText() {
+        dataPanel.add(simulationInfo);
+        dataPanel.setBounds(200, 400, 600, 50);
+        dataPanel.setBackground(INFO_COLOR);
+        dataPanel.setVisible(false);
+        dataPanel.setBorder(BorderFactory.createMatteBorder(
+                2, 2, 2, 2, Color.black));
+        mainPanel.add(dataPanel);
+        addData();
+    }
+
+    void addData() {
+        simulationInfo.setText(
+            "Время симуляции: " + simTime + " " +
+            "Кол-во менеджеров: " + Manager.countMan + " " +
+            "Кол-во разработчиков: " + Developer.countDev
+        );
+        frame.repaint();
+    }
+
+    JDialog createModal() {
+        final var modal = new JDialog(frame, "Завершить?", true);
+        final var textArea = new JTextArea(5, 20);
+
+        modal.setSize(500,300);
+
+        textArea.setEditable(false);
+        textArea.append(
+                "Время симуляции: " + simTime + " " +
+                "Кол-во менеджеров: " + Manager.countMan + " " +
+                "Кол-во разработчиков: " + Developer.countDev
+        );
+
+        textArea.setBounds(1, 1, 500, 100);
+        modal.getContentPane().add(textArea);
+        modal.setLocationRelativeTo(null);
+
+        return modal;
+    }
+
+    void createObjectsModal() {
+        final var objModal = new JDialog(frame, "Текущие объекты", false);
+        final var textArea = new JTextArea(5, 20);
+
+        objModal.setSize(500,300);
+        textArea.setEditable(false);
+
+        for (String name : hashMap.keySet()) {
+            String key = name.toString();
+            String value = hashMap.get(name).toString();
+            textArea.append(" ID: " + key + ": " + value + "\n");
+        }
+
+        textArea.setBounds(1, 1, 500, 100);
+        objModal.getContentPane().add(textArea);
+        objModal.setLocationRelativeTo(null);
+        objModal.setVisible(true);
+    }
+
+    void onStop() {
+        isAllowed = false;
+        simulationTimer.stop();
+        emplList.clear();
+        hashMap.clear();
+        IdList.clear();
+        objectsPanel.removeAll();
+        frame.repaint();
+        createDataText();
+        dataPanel.setVisible(!dataPanel.isVisible());
+        stopButton.setEnabled(false);
+        startButton.setEnabled(true);
+    }
+
+    void onStart() {
+        dataPanel.setVisible(!dataPanel.isVisible());
+        isAllowed = true;
+        simulationTimer.start();
+        generate();
+        stopButton.setEnabled(true);
+        startButton.setEnabled(false);
+    }
+
+    void onShow() {
+        if (simTimeLabel.isVisible()) {
+            return;
+        }
+
+        simTimeLabel.setVisible(!simTimeLabel.isVisible());
+    }
+
+    void onHide() {
+        if (!simTimeLabel.isVisible()) {
+            return;
+        }
+
+        simTimeLabel.setVisible(!simTimeLabel.isVisible());
+    }
+
+    private void handleKeyActions() {
+        KeyEventDispatcher dispatcher = new KeyEventDispatcher() {
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent e) {
+                if (e.getID() == KeyEvent.KEY_PRESSED) {
+                    if (e.getKeyCode() == KeyEvent.VK_E) {
+                        handleStopActions();
+                    }
+
+                    if (e.getKeyCode() == KeyEvent.VK_T) {
+                        simTimeLabel.setVisible(!simTimeLabel.isVisible());
+                    }
+
+                    else if (e.getKeyCode() == KeyEvent.VK_B) {
+                        onStart();
+                    }
+                }
+                return false;
+            }
+        };
+
+        KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+        manager.addKeyEventDispatcher(dispatcher);
+
+        startButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onStart();
+            }
+        });
+
+        stopButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                handleStopActions();
+            }
+        });
+
+        showObjectsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                createObjectsModal();
+            }
+        });
+
+        showInfoButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onShow();
+            }
+        });
+
+        NotShowInfoButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onHide();
+            }
+        });
     }
 
     void handleMenuButtons() {
@@ -304,167 +595,6 @@ public class Environment
         });
     }
 
-    void start() {
-        settingKeys();
-        changeSimTime();
-        clearTimer();
-    }
-
-    void deleteDeadObjects(long currTime) {
-
-        for (int i = 0; i < emplList.size(); i++) {
-            Employees obj = emplList.get(i);
-
-            if (obj.LayObject != null) {
-                if (currTime - obj.getCreateTime() >= Developer.devLifeTime*1000 && obj instanceof Developer) {
-                    objectsPanel.remove(obj.LayObject);
-                    emplList.remove(obj);
-                }
-                if (currTime - obj.getCreateTime() >= Manager.manLifeTime*1000 && obj instanceof Manager) {
-                    objectsPanel.remove(obj.LayObject);
-                    emplList.remove(obj);
-                }
-            }
-
-        }
-    }
-
-    Timer simulationTimer;
-    public void changeSimTime() {
-
-        simulationTimer = new Timer(1000, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                long tmp = System.currentTimeMillis();
-                long dif = (tmp - simStartTime) / 1000;
-                simTime = (int)dif;
-                simTimeLabel.setText("Время симуляции: " + dif);
-                frame.repaint();
-            }
-        });
-
-        simulationTimer.start();
-    }
-
-    public void clearTimer() {
-
-        Timer clearTimer = new Timer(1000, new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                deleteDeadObjects(System.currentTimeMillis());
-                frame.repaint();
-            }
-        });
-
-        clearTimer.start();
-    }
-
-    public int create(long time, int objType) {
-
-        if (!isAllowed) {
-            return -1;
-        }
-
-        int rand = (int) Math.ceil(Math.random() * 8);
-        int rand2 = (int) Math.ceil(Math.random() * 8);
-
-        if (rand < chanceOfBirth && objType == 1) {
-            var newObj = new Developer(
-                    getRandomNumber(0, objectsPanel.getWidth() - Employees.IMAGE_WIDTH),
-                    getRandomNumber(0,  objectsPanel.getHeight() - Employees.IMAGE_HEIGHT ));
-            emplList.add(newObj);
-            IdList.add(newObj.getId());
-            hashMap.put(newObj.getId(), (int)newObj.getCreateTime());
-            objectsPanel.add(newObj.LayObject);
-            frame.repaint();
-        }
-
-        if (rand2 < chanceOfBirth && objType == 2) {
-
-            if (!isAllowed) {
-                return -1;
-            }
-
-            var newObj = new Manager(
-                    getRandomNumber(0, objectsPanel.getWidth() - Employees.IMAGE_WIDTH),
-                    getRandomNumber(0,  objectsPanel.getHeight() - Employees.IMAGE_HEIGHT ));
-
-            emplList.add(newObj);
-            IdList.add(newObj.getId());
-            hashMap.put(newObj.getId(), (int)newObj.getCreateTime());
-            objectsPanel.add(newObj.LayObject);
-            objectsPanel.repaint();
-            frame.repaint();
-        }
-
-        if (emplList.size() > 50) isAllowed = false;
-
-        return 2;
-    }
-
-    void generate() {
-        var action = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (!isAllowed) return;
-                create(simStartTime, 1);
-            }
-        };
-
-        var manAction = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (!isAllowed) return;
-                create(simStartTime, 2);
-            }
-        };
-
-        devTimer = new Timer((generatePeriod*1000), action);
-        manTimer = new Timer((generatePeriod*1000), manAction);
-        devTimer.start();
-        manTimer.start();
-    }
-
-    public int getRandomNumber(int min, int max) {
-        return (int) ((Math.random() * (max - min)) + min);
-    }
-
-    void createDataText() {
-        dataPanel.add(simulationInfo);
-        dataPanel.setBounds(200, 400, 600, 50);
-        dataPanel.setBackground(INFO_COLOR);
-        dataPanel.setVisible(false);
-        dataPanel.setBorder(BorderFactory.createMatteBorder(
-                2, 2, 2, 2, Color.black));
-        mainPanel.add(dataPanel);
-        addData();
-    }
-
-    void addData() {
-        simulationInfo.setText(
-            "Время симуляции: " + simTime + " " +
-            "Кол-во менеджеров: " + Manager.countMan + " " +
-            "Кол-во разработчиков: " + Developer.countDev
-        );
-        frame.repaint();
-    }
-
-    JDialog createModal() {
-        final var modal = new JDialog(frame, "Завершить?", true);
-        final var textArea = new JTextArea(5, 20);
-
-        modal.setSize(500,300);
-
-        textArea.setEditable(false);
-        textArea.append(
-                "Время симуляции: " + simTime + " " +
-                "Кол-во менеджеров: " + Manager.countMan + " " +
-                "Кол-во разработчиков: " + Developer.countDev
-        );
-
-        textArea.setBounds(1, 1, 500, 100);
-        modal.getContentPane().add(textArea);
-        modal.setLocationRelativeTo(null);
-
-        return modal;
-    }
-
     void handleStopActions() {
         if (showInfo) {
             final var modal = createModal();
@@ -488,8 +618,11 @@ public class Environment
                     modal.dispose();
                 }
             });
+
             modalOKButton.setBounds(100, 130, 80, 30);
             modalCancelButton.setBounds(300, 130, 80, 30);
+            modalOKButton.setBackground(BUTTON_COLOR);
+            modalCancelButton.setBackground(STOP_COLOR);
             pane.add(modalOKButton);
             pane.add(modalCancelButton);
             modal.setVisible(true);
@@ -497,97 +630,6 @@ public class Environment
             return;
         }
         onStop();
-    }
-
-    void onStop() {
-        isAllowed = false;
-        simulationTimer.stop();
-        emplList.clear();
-        hashMap.clear();
-        IdList.clear();
-        objectsPanel.removeAll();
-        frame.repaint();
-        createDataText();
-        dataPanel.setVisible(!dataPanel.isVisible());
-        stopButton.setEnabled(false);
-        startButton.setEnabled(true);
-    }
-
-    void onStart() {
-        dataPanel.setVisible(!dataPanel.isVisible());
-        isAllowed = true;
-        simulationTimer.start();
-        generate();
-        stopButton.setEnabled(true);
-        startButton.setEnabled(false);
-    }
-
-    void onShow() {
-        if (simTimeLabel.isVisible()) {
-            return;
-        }
-
-        simTimeLabel.setVisible(!simTimeLabel.isVisible());
-    }
-
-    void onHide() {
-        if (!simTimeLabel.isVisible()) {
-            return;
-        }
-
-        simTimeLabel.setVisible(!simTimeLabel.isVisible());
-    }
-    private void settingKeys() {
-        KeyEventDispatcher dispatcher = new KeyEventDispatcher() {
-            @Override
-            public boolean dispatchKeyEvent(KeyEvent e) {
-                if (e.getID() == KeyEvent.KEY_PRESSED) {
-                    if (e.getKeyCode() == KeyEvent.VK_E) {
-                        handleStopActions();
-                    }
-
-                    if (e.getKeyCode() == KeyEvent.VK_T) {
-                        simTimeLabel.setVisible(!simTimeLabel.isVisible());
-                    }
-
-                    else if (e.getKeyCode() == KeyEvent.VK_B) {
-                        onStart();
-                    }
-                }
-                return false;
-            }
-        };
-
-        KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        manager.addKeyEventDispatcher(dispatcher);
-
-        startButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onStart();
-            }
-        });
-
-        stopButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                handleStopActions();
-            }
-        });
-
-        showInfoButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onShow();
-            }
-        });
-
-        NotShowInfoButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onHide();
-            }
-        });
     }
 
     public static void main(String[] args)

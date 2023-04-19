@@ -10,8 +10,8 @@ import java.util.UUID;
 
 public abstract class Employees {
 
-    public static final int IMAGE_WIDTH = 120;
-    public static final int IMAGE_HEIGHT = 80;
+    public static final int IMAGE_WIDTH = 96;
+    public static final int IMAGE_HEIGHT = 64;
 
     private final long createTime;
     private final String id;
