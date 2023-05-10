@@ -1,18 +1,15 @@
-import Employees.Developer;
-import Employees.Employees;
-import Employees.Manager;
-import Employees.CounterLabel;
+package Employees;
+
+import AI.*;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import javax.swing.*;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
-import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.TreeSet;
 
@@ -25,18 +22,18 @@ public class Environment
 
     /* Цвета */
 
-    private static final  Color BUTTON_COLOR =  new Color(50, 205, 50);
-    private static final  Color BACK_COLOR =  new Color(64, 181, 173);
-    private static final  Color HEADER_COLOR =  new Color(135, 206, 235);
-    private static final  Color STOP_COLOR =  new Color(255, 79, 91);
-    private static final  Color INFO_COLOR = new Color(159, 226, 191);
-    private static final  Color OBJ_COLOR = new Color(240, 230, 140);
+    private static final Color BUTTON_COLOR =  new Color(50, 205, 50);
+    private static final Color BACK_COLOR =  new Color(64, 181, 173);
+    private static final Color HEADER_COLOR =  new Color(135, 206, 235);
+    private static final Color STOP_COLOR =  new Color(255, 79, 91);
+    private static final Color INFO_COLOR = new Color(159, 226, 191);
+    private static final Color OBJ_COLOR = new Color(240, 230, 140);
 
     /* Изменяемые переменные */
 
     private final long simStartTime;
     private int generatePeriod = 5;
-    private int chanceOfBirth = 8;
+    private final int chanceOfBirth = 8;
     private int simTime;
     private boolean isAllowed = true;
     private boolean showInfo = false;
@@ -51,7 +48,7 @@ public class Environment
 
     private final ArrayList<Employees> emplList = new ArrayList<>();
     private final TreeSet IdList = new TreeSet();
-    private final HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
+    private final HashMap<String, Integer> hashMap = new HashMap<>();
 
     /* Блок фрейма и панелей */
 
@@ -60,10 +57,7 @@ public class Environment
     private final JLabel simulationInfo;
     private final JPanel dataPanel;
     private final JPanel mainPanel;
-    private final JPanel devLifeTimeData;
-    private final JPanel manLifeTimeData;
-    private JPanel objectsPanel;
-    private final JPanel buttonsPanel = new JPanel();
+    private final JPanel objectsPanel;
 
     /* Блок кнопок и чекбоксов */
 
@@ -72,22 +66,25 @@ public class Environment
     private final JButton showObjectsButton;
     private final JRadioButton showInfoButton;
     private final JRadioButton NotShowInfoButton;
-    private final ButtonGroup switchButtons;
     private final JCheckBox checkBox;
     private final JTextField inputText;
     private final JTextField devLifeTime;
     private final JTextField manLifeTime;
 
+    private JCheckBox priorCheckBox = new JCheckBox("Приоритет");
+    private JCheckBox manAICheckBox = new JCheckBox("Man AI");
+    private JCheckBox devAICheckBox = new JCheckBox("Dev AI");
+
     /* Блок с меню */
 
-    private final JMenuBar menuBar;
-    private final JMenu fileMenu;
-    private final JMenu newMenu;
     private final JMenuItem showTextItem;
     private final JMenuItem hideTextItem;
     private final JMenuItem startItem;
     private final JMenuItem stopItem;
     private final JMenuItem exitItem;
+
+    private final ManAI manAI;
+    private final DevAI devAI;
 
     Environment()
     {
@@ -96,21 +93,23 @@ public class Environment
         frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE ) ;
         frame.setFocusable(true);
 
-        dataPanel = new JPanel();
-        mainPanel = new JPanel();
-        devLifeTimeData = new JPanel(new BorderLayout());
-        manLifeTimeData = new JPanel(new BorderLayout());
-        objectsPanel = new JPanel(null);
-        objectsPanel.setPreferredSize(new Dimension(SCREEN_WIDTH, 500));
+        JPanel devLifeTimeData = new JPanel(new BorderLayout());
+        JPanel buttonsPanel = new JPanel();
+        JPanel manLifeTimeData = new JPanel(new BorderLayout());
         JPanel pan = new JPanel(new BorderLayout());
-
-        simTimeLabel = new JLabel();
-        simulationInfo = new JLabel();
         JLabel myLabel = new JLabel("Введите время рождения в секундах:");
         JLabel devLifeTimeLabel = new JLabel("Время жизни разрабов");
         JLabel manLifeTimeLabel = new JLabel("Время жизни менеджеров");
 
         Font font = new Font("Verdana", Font.PLAIN, 11);
+
+        dataPanel = new JPanel();
+        mainPanel = new JPanel();
+        objectsPanel = new JPanel(null);
+        objectsPanel.setPreferredSize(new Dimension(SCREEN_WIDTH, 500));
+
+        simTimeLabel = new JLabel();
+        simulationInfo = new JLabel();
 
         startButton = new JButton("Start");
         stopButton = new JButton("Stop");
@@ -118,12 +117,11 @@ public class Environment
 
         NotShowInfoButton = new JRadioButton("Убрать текст", false);
         showInfoButton = new JRadioButton("Показать текст", true);
-        switchButtons = new ButtonGroup();
+        ButtonGroup switchButtons = new ButtonGroup();
         checkBox = new JCheckBox("Показывать информацию");
         inputText = new JTextField( 25);
         devLifeTime = new JTextField( 25);
         manLifeTime = new JTextField( 25);
-
 
         switchButtons.add(showInfoButton);
         switchButtons.add(NotShowInfoButton);
@@ -155,6 +153,9 @@ public class Environment
         buttonsPanel.add(pan);
         buttonsPanel.add(devLifeTimeData);
         buttonsPanel.add(manLifeTimeData);
+        buttonsPanel.add(priorCheckBox);
+        buttonsPanel.add(manAICheckBox);
+        buttonsPanel.add(devAICheckBox);
 
         /* Главная панель */
 
@@ -165,11 +166,11 @@ public class Environment
 
         /* Меню */
 
-        menuBar = new JMenuBar();
-        fileMenu = new JMenu("Настройки");
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("Настройки");
         fileMenu.setFont(font);
 
-        newMenu = new JMenu("Текст");
+        JMenu newMenu = new JMenu("Текст");
         newMenu.setFont(font);
         fileMenu.add(newMenu);
 
@@ -214,30 +215,75 @@ public class Environment
         frame.setJMenuBar(menuBar);
         frame.getContentPane().add(mainPanel);
 
+        manAI = new ManAI(emplList, this);
+        devAI = new DevAI(emplList, this);
+
         frame.setLocationRelativeTo(null);
         frame.setVisible( true );
         frame.repaint();
         start();
     }
 
+    public void repaintObjPanel() {
+        objectsPanel.repaint();
+        objectsPanel.revalidate();
+        frame.repaint();
+    }
+
     void start() {
         handleKeyActions();
         changeSimTime();
         clearTimer();
+
+        priorCheckBox.addActionListener(e -> {
+            if (!priorCheckBox.isSelected()) {
+                manAI.setPriority(Thread.MAX_PRIORITY);
+                devAI.setPriority(Thread.MIN_PRIORITY);
+            } else {
+                manAI.setPriority(Thread.MIN_PRIORITY);
+                devAI.setPriority(Thread.MAX_PRIORITY);
+            }
+        });
+
+        manAI.start();
+        devAI.start();
+        attachListeners();
+    }
+
+    private synchronized void attachListeners() {
+        devAICheckBox.addActionListener(e -> controlDevThread(devAICheckBox.isSelected()));
+        manAICheckBox.addActionListener(e -> controlManThread(manAICheckBox.isSelected()));
+    }
+
+    boolean fistCheck = true;
+    private synchronized void controlManThread(boolean checked) {
+        if (!checked) {
+            manAI.stopAI();
+        } else {
+            manAI.resumeAI();
+        }
+    }
+
+    private synchronized void controlDevThread(boolean checked) {
+        if (!checked) {
+            devAI.stopAI();
+        } else {
+            devAI.resumeAI();
+        }
     }
 
     void deleteDeadObjects(long currTime) {
-
         for (int i = 0; i < emplList.size(); i++) {
             Employees obj = emplList.get(i);
 
             if (obj.LayObject != null) {
                 if (currTime - obj.getCreateTime() >= Developer.devLifeTime*1000 && obj instanceof Developer) {
                     objectsPanel.remove(obj.LayObject);
+                    hashMap.remove(obj.getId());
                     emplList.remove(obj);
                     IdList.remove(obj.getId());
-                    hashMap.remove(obj.getId());
                 }
+
                 if (currTime - obj.getCreateTime() >= Manager.manLifeTime*1000 && obj instanceof Manager) {
                     objectsPanel.remove(obj.LayObject);
                     emplList.remove(obj);
@@ -291,11 +337,14 @@ public class Environment
         if (rand < chanceOfBirth && objType == 1) {
             var newObj = new Developer(
                     getRandomNumber(0, objectsPanel.getWidth() - Employees.IMAGE_WIDTH),
-                    getRandomNumber(0,  objectsPanel.getHeight() - Employees.IMAGE_HEIGHT ));
+                    getRandomNumber(0,  objectsPanel.getHeight() - Employees.IMAGE_HEIGHT));
+
             emplList.add(newObj);
             IdList.add(newObj.getId());
             hashMap.put(newObj.getId(), ((int)(System.currentTimeMillis() - newObj.getCreateTime()))/1000);
             objectsPanel.add(newObj.LayObject);
+            objectsPanel.revalidate();
+            frame.getContentPane().repaint();
             frame.repaint();
         }
 
@@ -307,13 +356,16 @@ public class Environment
 
             var newObj = new Manager(
                     getRandomNumber(0, objectsPanel.getWidth() - Employees.IMAGE_WIDTH),
-                    getRandomNumber(0,  objectsPanel.getHeight() - Employees.IMAGE_HEIGHT ));
+                    getRandomNumber(0,  objectsPanel.getHeight() - Employees.IMAGE_HEIGHT));
 
             emplList.add(newObj);
             IdList.add(newObj.getId());
             hashMap.put(newObj.getId(), ((int)(System.currentTimeMillis() - simStartTime)/1000));
             objectsPanel.add(newObj.LayObject);
+            System.out.println("added");
+            frame.getContentPane().repaint();
             objectsPanel.repaint();
+            objectsPanel.revalidate();
             frame.repaint();
         }
 
@@ -327,6 +379,7 @@ public class Environment
             public void actionPerformed(ActionEvent e) {
                 if (!isAllowed) return;
                 create(simStartTime, 1);
+                frame.repaint();
             }
         };
 
@@ -334,6 +387,7 @@ public class Environment
             public void actionPerformed(ActionEvent e) {
                 if (!isAllowed) return;
                 create(simStartTime, 2);
+                frame.repaint();
             }
         };
 
@@ -389,6 +443,7 @@ public class Environment
 
         objModal.setSize(500,300);
         textArea.setEditable(false);
+        textArea.removeAll();
 
         for (String name : hashMap.keySet()) {
             String key = name.toString();
