@@ -21,18 +21,15 @@ public abstract class BaseAI extends Thread {
         this.context = context;
     }
 
+    @Override
     public void run() {
-        System.out.println("run\n");
         while (running) {
-            context.repaintObjPanel();
             synchronized (this) {
+                context.repaintObjPanel();
                 this.procces();
             }
-
             context.repaintObjPanel();
-            System.out.println("tt\n");
             try {
-                context.repaintObjPanel();
                 if (paused) synchronized (this) {
                     this.wait();
                     context.repaintObjPanel();
@@ -46,12 +43,10 @@ public abstract class BaseAI extends Thread {
 
     public void stopAI() {
         paused = true;
-        context.repaintObjPanel();
     }
 
-    public synchronized void resumeAI() {
+    public void resumeAI() {
         paused = false;
-        context.repaintObjPanel();
         synchronized (this) {
             notify();
         }

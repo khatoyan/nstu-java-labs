@@ -53,16 +53,14 @@ public class DevAI extends BaseAI {
     @Override
     synchronized void procces() {
         if (objects.size() != 0) {
-            ListIterator<Employees> iterator = objects.listIterator();
-            try {
-                for (Employees emp = iterator.next(); iterator.hasNext(); emp = iterator.next()) {
-                    if (emp instanceof Developer && checkPos(emp)) {
-                        Point p = move(emp);
-                        emp.setPosition(p.x, p.y);
-                    }
+
+            for (int  i = 0; i < objects.size(); i++) {
+                Employees emp = objects.get(i);
+
+                if (emp instanceof Developer && checkPos(emp)) {
+                    Point p = move(emp);
+                    emp.setPosition(p.x, p.y);
                 }
-            } catch (Exception e) {
-                System.out.println("Dev Process Error\n");
             }
         }
     }

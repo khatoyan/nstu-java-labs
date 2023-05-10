@@ -55,6 +55,8 @@ public class Environment
     private static JFrame frame;
     private final JLabel simTimeLabel;
     private final JLabel simulationInfo;
+    private final JLabel manLabel;
+    private final JLabel devLabel;
     private final JPanel dataPanel;
     private final JPanel mainPanel;
     private final JPanel objectsPanel;
@@ -70,6 +72,12 @@ public class Environment
     private final JTextField inputText;
     private final JTextField devLifeTime;
     private final JTextField manLifeTime;
+
+    private final String[] items = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+    private final String[] manItems = items;
+
+    private final JComboBox comboBox = new JComboBox(items);
+    private final JComboBox comboBoxMan = new JComboBox(manItems);
 
     private JCheckBox priorCheckBox = new JCheckBox("Приоритет");
     private JCheckBox manAICheckBox = new JCheckBox("Man AI");
@@ -96,10 +104,23 @@ public class Environment
         JPanel devLifeTimeData = new JPanel(new BorderLayout());
         JPanel buttonsPanel = new JPanel();
         JPanel manLifeTimeData = new JPanel(new BorderLayout());
+        JPanel manPList = new JPanel(new BorderLayout());
+        JPanel devPList = new JPanel(new BorderLayout());
+
         JPanel pan = new JPanel(new BorderLayout());
-        JLabel myLabel = new JLabel("Введите время рождения в секундах:");
+        JLabel myLabel = new JLabel("Введите время рождения в секундах: ");
         JLabel devLifeTimeLabel = new JLabel("Время жизни разрабов");
         JLabel manLifeTimeLabel = new JLabel("Время жизни менеджеров");
+        manLabel = new JLabel("Man Priority");
+        devLabel = new JLabel("Dev Priority");
+
+        manPList.add(manLabel);
+        manPList.add(comboBoxMan);
+        devPList.add(devLabel);
+        devPList.add(comboBox);
+
+        manPList.setLayout(new BoxLayout(manPList, BoxLayout.Y_AXIS));
+        devPList.setLayout(new BoxLayout(devPList, BoxLayout.Y_AXIS));
 
         Font font = new Font("Verdana", Font.PLAIN, 11);
 
@@ -151,9 +172,12 @@ public class Environment
         buttonsPanel.add(showInfoButton);
         buttonsPanel.add(NotShowInfoButton);
         buttonsPanel.add(pan);
+
         buttonsPanel.add(devLifeTimeData);
         buttonsPanel.add(manLifeTimeData);
-        buttonsPanel.add(priorCheckBox);
+
+        buttonsPanel.add(manPList);
+        buttonsPanel.add(devPList);
         buttonsPanel.add(manAICheckBox);
         buttonsPanel.add(devAICheckBox);
 
@@ -234,6 +258,7 @@ public class Environment
         handleKeyActions();
         changeSimTime();
         clearTimer();
+        generate();
 
         priorCheckBox.addActionListener(e -> {
             if (!priorCheckBox.isSelected()) {
@@ -245,18 +270,31 @@ public class Environment
             }
         });
 
-        manAI.start();
         devAI.start();
+        manAI.start();
         attachListeners();
     }
 
-    private synchronized void attachListeners() {
-        devAICheckBox.addActionListener(e -> controlDevThread(devAICheckBox.isSelected()));
-        manAICheckBox.addActionListener(e -> controlManThread(manAICheckBox.isSelected()));
+    private void attachListeners() {
+        devAICheckBox.setSelected(true);
+        manAICheckBox.setSelected(true);
+        devAICheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                controlDevThread(devAICheckBox.isSelected());
+            }
+        });
+
+        manAICheckBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                controlManThread(manAICheckBox.isSelected());
+            }
+        });
     }
 
     boolean fistCheck = true;
-    private synchronized void controlManThread(boolean checked) {
+    private void controlManThread(boolean checked) {
         if (!checked) {
             manAI.stopAI();
         } else {
@@ -264,7 +302,7 @@ public class Environment
         }
     }
 
-    private synchronized void controlDevThread(boolean checked) {
+    private void controlDevThread(boolean checked) {
         if (!checked) {
             devAI.stopAI();
         } else {
@@ -321,6 +359,18 @@ public class Environment
         clearTimer.start();
     }
 
+    public void toRunTimer() {
+
+        Timer runTimer = new Timer(1000, new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                deleteDeadObjects(System.currentTimeMillis());
+                frame.repaint();
+            }
+        });
+
+        runTimer.start();
+    }
+
     public int getRandomNumber(int min, int max) {
         return (int) ((Math.random() * (max - min)) + min);
     }
@@ -343,8 +393,6 @@ public class Environment
             IdList.add(newObj.getId());
             hashMap.put(newObj.getId(), ((int)(System.currentTimeMillis() - newObj.getCreateTime()))/1000);
             objectsPanel.add(newObj.LayObject);
-            objectsPanel.revalidate();
-            frame.getContentPane().repaint();
             frame.repaint();
         }
 
@@ -362,10 +410,7 @@ public class Environment
             IdList.add(newObj.getId());
             hashMap.put(newObj.getId(), ((int)(System.currentTimeMillis() - simStartTime)/1000));
             objectsPanel.add(newObj.LayObject);
-            System.out.println("added");
-            frame.getContentPane().repaint();
             objectsPanel.repaint();
-            objectsPanel.revalidate();
             frame.repaint();
         }
 
@@ -378,16 +423,16 @@ public class Environment
         var action = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (!isAllowed) return;
-                create(simStartTime, 1);
                 frame.repaint();
+                create(simStartTime, 1);
             }
         };
 
         var manAction = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (!isAllowed) return;
-                create(simStartTime, 2);
                 frame.repaint();
+                create(simStartTime, 2);
             }
         };
 
@@ -475,7 +520,6 @@ public class Environment
         dataPanel.setVisible(!dataPanel.isVisible());
         isAllowed = true;
         simulationTimer.start();
-        generate();
         stopButton.setEnabled(true);
         startButton.setEnabled(false);
     }
@@ -551,12 +595,30 @@ public class Environment
         NotShowInfoButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                onHide();
-            }
+                onHide();}
         });
     }
 
     void handleMenuButtons() {
+
+        ActionListener actionListener = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JComboBox box = (JComboBox)e.getSource();
+                String item = (String)box.getSelectedItem();
+                devAI.setPriority(Integer.parseInt(item));
+            }
+        };
+
+        ActionListener manActionListener = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JComboBox box = (JComboBox)e.getSource();
+                String item = (String)box.getSelectedItem();
+                manAI.setPriority(Integer.parseInt(item));
+            }
+        };
+
+        comboBox.addActionListener(actionListener);
+        comboBoxMan.addActionListener(actionListener);
         startItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -602,12 +664,10 @@ public class Environment
                     devTimer.setDelay(generatePeriod*1000);
                     manTimer.setDelay(generatePeriod*1000);
                     inputText.setText("");
-                    System.out.println(generatePeriod);
                 } catch (NumberFormatException ex) {
                     generatePeriod = 1;
                     devTimer.setDelay(generatePeriod*1000);
                     manTimer.setDelay(generatePeriod*1000);
-                    inputText.setText("1");
                     JOptionPane.showMessageDialog(frame,"Ошибка! Некорректный ввод. Подставлено значение 1");
                 }
             }
