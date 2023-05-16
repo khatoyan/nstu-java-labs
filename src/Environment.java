@@ -1,3 +1,5 @@
+import AI.DevAI;
+import AI.ManAI;
 import Employees.Developer;
 import Employees.Employees;
 import Employees.Manager;
@@ -10,6 +12,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import javax.swing.*;
+import javax.swing.plaf.ColorUIResource;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
@@ -25,12 +28,14 @@ public class Environment
 
     /* Цвета */
 
-    private static final  Color BUTTON_COLOR =  new Color(50, 205, 50);
-    private static final  Color BACK_COLOR =  new Color(64, 181, 173);
-    private static final  Color HEADER_COLOR =  new Color(135, 206, 235);
-    private static final  Color STOP_COLOR =  new Color(255, 79, 91);
-    private static final  Color INFO_COLOR = new Color(159, 226, 191);
-    private static final  Color OBJ_COLOR = new Color(240, 230, 140);
+    private static Color BUTTON_COLOR =  new Color(50, 205, 50);
+    private static Color BACK_COLOR =  new Color(64, 181, 173);
+    private static Color HEADER_COLOR =  new Color(135, 206, 235);
+    private static Color STOP_COLOR =  new Color(255, 79, 91);
+    private static Color GOOD_COLOR =  new Color(83, 128, 213);
+    private static Color INFO_COLOR = new Color(159, 226, 191);
+    private static Color OBJ_COLOR = new Color(240, 230, 140);
+    private static Color LIGHT_COLOR = new Color(255,255,255);
 
     /* Изменяемые переменные */
 
@@ -38,6 +43,7 @@ public class Environment
     private int generatePeriod = 5;
     private int chanceOfBirth = 8;
     private int simTime;
+    private boolean isLightTheme = true;
     private boolean isAllowed = true;
     private boolean showInfo = false;
 
@@ -49,7 +55,7 @@ public class Environment
 
     /* Коллекции данных */
 
-    private final ArrayList<Employees> emplList = new ArrayList<>();
+    private ArrayList<Employees> emplList = new ArrayList<>();
     private final TreeSet IdList = new TreeSet();
     private final HashMap<String, Integer> hashMap = new HashMap<String, Integer>();
 
@@ -62,6 +68,7 @@ public class Environment
     private final JPanel mainPanel;
     private final JPanel devLifeTimeData;
     private final JPanel manLifeTimeData;
+    private final JPanel pan;
     private JPanel objectsPanel;
     private final JPanel buttonsPanel = new JPanel();
 
@@ -70,8 +77,10 @@ public class Environment
     private final JButton startButton;
     private final JButton stopButton;
     private final JButton showObjectsButton;
-    private final JRadioButton showInfoButton;
-    private final JRadioButton NotShowInfoButton;
+    private final JButton changeThemeButton;
+    private final JButton saveDBButton;
+    private final JButton loadDBButton;
+
     private final ButtonGroup switchButtons;
     private final JCheckBox checkBox;
     private final JTextField inputText;
@@ -83,11 +92,21 @@ public class Environment
     private final JMenuBar menuBar;
     private final JMenu fileMenu;
     private final JMenu newMenu;
+    private final JMenu nMenu;
     private final JMenuItem showTextItem;
     private final JMenuItem hideTextItem;
+    private final JMenuItem onDevAI;
+    private final JMenuItem offDevAI;
+    private final JMenuItem onManAI;
+    private final JMenuItem offManAI;
     private final JMenuItem startItem;
     private final JMenuItem stopItem;
     private final JMenuItem exitItem;
+
+    private DevAI devAI;
+    private ManAI manAI;
+
+    private final dbMethods dbMethods;
 
     Environment()
     {
@@ -102,7 +121,7 @@ public class Environment
         manLifeTimeData = new JPanel(new BorderLayout());
         objectsPanel = new JPanel(null);
         objectsPanel.setPreferredSize(new Dimension(SCREEN_WIDTH, 500));
-        JPanel pan = new JPanel(new BorderLayout());
+        pan = new JPanel(new BorderLayout());
 
         simTimeLabel = new JLabel();
         simulationInfo = new JLabel();
@@ -110,26 +129,28 @@ public class Environment
         JLabel devLifeTimeLabel = new JLabel("Время жизни разрабов");
         JLabel manLifeTimeLabel = new JLabel("Время жизни менеджеров");
 
+        myLabel.setForeground(LIGHT_COLOR);
+        devLifeTimeLabel.setForeground(LIGHT_COLOR);
+        manLifeTimeLabel.setForeground(LIGHT_COLOR);
+
         Font font = new Font("Verdana", Font.PLAIN, 11);
 
         startButton = new JButton("Start");
         stopButton = new JButton("Stop");
         showObjectsButton = new JButton("Текущие объекты");
+        changeThemeButton = new JButton("Сменить тему");
+        saveDBButton = new JButton("Сохранить в БД");
+        loadDBButton = new JButton("Загрузить из БД");
 
-        NotShowInfoButton = new JRadioButton("Убрать текст", false);
-        showInfoButton = new JRadioButton("Показать текст", true);
         switchButtons = new ButtonGroup();
         checkBox = new JCheckBox("Показывать информацию");
         inputText = new JTextField( 25);
         devLifeTime = new JTextField( 25);
         manLifeTime = new JTextField( 25);
 
-
-        switchButtons.add(showInfoButton);
-        switchButtons.add(NotShowInfoButton);
-
         devLifeTimeData.add(devLifeTimeLabel);
         devLifeTimeData.add(devLifeTime);
+        devLifeTimeData.setBackground(LIGHT_COLOR);
         manLifeTimeData.add(manLifeTimeLabel);
         manLifeTimeData.add(manLifeTime);
         devLifeTimeData.setLayout(new BoxLayout(devLifeTimeData, BoxLayout.Y_AXIS));
@@ -138,7 +159,6 @@ public class Environment
         pan.add(myLabel);
         pan.add(inputText);
         pan.setLayout(new BoxLayout(pan, BoxLayout.Y_AXIS));
-        pan.setBackground(HEADER_COLOR);
 
         simTimeLabel.setSize(800, 60);
         simStartTime = System.currentTimeMillis();
@@ -149,9 +169,10 @@ public class Environment
         buttonsPanel.add(startButton);
         buttonsPanel.add(stopButton);
         buttonsPanel.add(showObjectsButton);
+        buttonsPanel.add(changeThemeButton);
+        buttonsPanel.add(saveDBButton);
+        buttonsPanel.add(loadDBButton);
         buttonsPanel.add(checkBox);
-        buttonsPanel.add(showInfoButton);
-        buttonsPanel.add(NotShowInfoButton);
         buttonsPanel.add(pan);
         buttonsPanel.add(devLifeTimeData);
         buttonsPanel.add(manLifeTimeData);
@@ -169,17 +190,37 @@ public class Environment
         fileMenu = new JMenu("Настройки");
         fileMenu.setFont(font);
 
-        newMenu = new JMenu("Текст");
-        newMenu.setFont(font);
-        fileMenu.add(newMenu);
+        nMenu = new JMenu("Текст");
+        nMenu.setFont(font);
+        fileMenu.add(nMenu);
 
         showTextItem = new JMenuItem("Показать");
         showTextItem.setFont(font);
-        newMenu.add(showTextItem);
+        nMenu.add(showTextItem);
 
         hideTextItem = new JMenuItem("Убрать");
         hideTextItem.setFont(font);
-        newMenu.add(hideTextItem);
+        nMenu.add(hideTextItem);
+
+        newMenu = new JMenu("AI");
+        newMenu.setFont(font);
+        fileMenu.add(newMenu);
+
+        onDevAI = new JMenuItem("Включить Dev AI");
+        onDevAI.setFont(font);
+        newMenu.add(onDevAI);
+
+        offDevAI = new JMenuItem("Выключить Dev AI");
+        offDevAI.setFont(font);
+        newMenu.add(offDevAI);
+
+        onManAI = new JMenuItem("Включить Dev AI");
+        onManAI.setFont(font);
+        newMenu.add(onManAI);
+
+        offManAI = new JMenuItem("Выключить Dev AI");
+        offManAI.setFont(font);
+        newMenu.add(offManAI);
 
         startItem = new JMenuItem("Старт");
         startItem.setFont(font);
@@ -198,25 +239,21 @@ public class Environment
 
         handleInputChange();
         handleMenuButtons();
-
-        startButton.setBackground(BUTTON_COLOR);
-        stopButton.setBackground(STOP_COLOR);
-        showObjectsButton.setBackground(OBJ_COLOR);
-        checkBox.setBackground(HEADER_COLOR);
-        buttonsPanel.setBackground(HEADER_COLOR);
-        devLifeTimeData.setBackground(HEADER_COLOR);
-        manLifeTimeData.setBackground(HEADER_COLOR);
-        NotShowInfoButton.setBackground(HEADER_COLOR);
-        showInfoButton.setBackground(HEADER_COLOR);
-        simTimeLabel.setBackground(BACK_COLOR);
-        objectsPanel.setBackground(BACK_COLOR);
+        setTheme();
 
         frame.setJMenuBar(menuBar);
         frame.getContentPane().add(mainPanel);
-
         frame.setLocationRelativeTo(null);
         frame.setVisible( true );
         frame.repaint();
+
+        devAI = new DevAI(emplList);
+        manAI = new ManAI(emplList);
+
+        devAI.start();
+        manAI.start();
+
+        dbMethods = new dbMethods();
         start();
     }
 
@@ -224,6 +261,46 @@ public class Environment
         handleKeyActions();
         changeSimTime();
         clearTimer();
+    }
+
+    private void changeColors() {
+        if (isLightTheme) {
+            BUTTON_COLOR =  new Color(50, 205, 50);
+            BACK_COLOR =  new Color(64, 181, 173);
+            HEADER_COLOR =  new Color(135, 206, 235);
+            STOP_COLOR =  new Color(255, 79, 91);
+            INFO_COLOR = new Color(159, 226, 191);
+            OBJ_COLOR = new Color(240, 230, 140);
+            GOOD_COLOR = new Color(83, 128, 213);
+            isLightTheme = false;
+        } else {
+            BUTTON_COLOR = Color.WHITE;
+            BACK_COLOR = Color.BLACK;
+            HEADER_COLOR = new Color(40, 40, 40);
+            STOP_COLOR = Color.WHITE;
+            INFO_COLOR = new Color(61, 65, 61);
+            OBJ_COLOR = Color.WHITE;
+            GOOD_COLOR = Color.WHITE;
+            isLightTheme = true;
+        }
+    }
+
+    private void setTheme() {
+        changeColors();
+        startButton.setBackground(BUTTON_COLOR);
+        stopButton.setBackground(STOP_COLOR);
+        showObjectsButton.setBackground(OBJ_COLOR);
+        changeThemeButton.setBackground(GOOD_COLOR);
+        saveDBButton.setBackground(GOOD_COLOR);
+        loadDBButton.setBackground(GOOD_COLOR);
+        checkBox.setBackground(LIGHT_COLOR);
+        buttonsPanel.setBackground(HEADER_COLOR);
+        devLifeTimeData.setBackground(HEADER_COLOR);
+        manLifeTimeData.setBackground(HEADER_COLOR);
+        simTimeLabel.setBackground(BACK_COLOR);
+        objectsPanel.setBackground(BACK_COLOR);
+        pan.setBackground(HEADER_COLOR);
+        objectsPanel.repaint();
     }
 
     void deleteDeadObjects(long currTime) {
@@ -256,7 +333,6 @@ public class Environment
                 long dif = (tmp - simStartTime) / 1000;
                 simTime = (int)dif;
                 simTimeLabel.setText("Время симуляции: " + dif);
-                frame.repaint();
             }
         });
 
@@ -296,7 +372,6 @@ public class Environment
             IdList.add(newObj.getId());
             hashMap.put(newObj.getId(), ((int)(System.currentTimeMillis() - newObj.getCreateTime()))/1000);
             objectsPanel.add(newObj.LayObject);
-            frame.repaint();
         }
 
         if (rand2 < chanceOfBirth && objType == 2) {
@@ -313,8 +388,6 @@ public class Environment
             IdList.add(newObj.getId());
             hashMap.put(newObj.getId(), ((int)(System.currentTimeMillis() - simStartTime)/1000));
             objectsPanel.add(newObj.LayObject);
-            objectsPanel.repaint();
-            frame.repaint();
         }
 
         if (emplList.size() > 50) isAllowed = false;
@@ -441,6 +514,12 @@ public class Environment
         simTimeLabel.setVisible(!simTimeLabel.isVisible());
     }
 
+    private void addEmp(Employees newObj) {
+        IdList.add(newObj.getId());
+        hashMap.put(newObj.getId(), ((int)(System.currentTimeMillis() - newObj.getCreateTime()))/1000);
+        objectsPanel.add(newObj.LayObject);
+    }
+
     private void handleKeyActions() {
         KeyEventDispatcher dispatcher = new KeyEventDispatcher() {
             @Override
@@ -486,19 +565,7 @@ public class Environment
             }
         });
 
-        showInfoButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onShow();
-            }
-        });
-
-        NotShowInfoButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onHide();
-            }
-        });
+        changeThemeButton.addActionListener(e -> setTheme());
     }
 
     void handleMenuButtons() {
@@ -516,17 +583,24 @@ public class Environment
             }
         });
 
-        showTextItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onShow();
-            }
-        });
+        showTextItem.addActionListener(e -> onShow());
+        hideTextItem.addActionListener(e -> onHide());
+        onDevAI.addActionListener(e -> devAI.resumeAI());
+        offDevAI.addActionListener(e -> devAI.stopAI());
+        onManAI.addActionListener(e -> manAI.resumeAI());
+        offManAI.addActionListener(e -> manAI.stopAI());
+        saveDBButton.addActionListener(e -> dbMethods.saveObjects(emplList));
 
-        hideTextItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onHide();
+        loadDBButton.addActionListener(e -> {
+            objectsPanel.removeAll();
+            hashMap.clear();
+            IdList.clear();
+            emplList.clear();
+            var tmp = dbMethods.loadObjects();
+
+            for (int i = 0; i < tmp.size(); i++) {
+                emplList.add(tmp.get(i));
+                addEmp(tmp.get(i));
             }
         });
 

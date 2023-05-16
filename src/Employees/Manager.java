@@ -29,6 +29,13 @@ public class Manager extends Employees implements IBehaviour {
         setPosition(x, y);
     }
 
+    public Manager(String id, int x, int y, long createTime, long lifeTime) {
+        this(x, y);
+        setID(id);
+        this.lifeTime = lifeTime;
+        this.createTime = createTime;
+    }
+
     public void setX(int x) {
         this.x = x;
     }

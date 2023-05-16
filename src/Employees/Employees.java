@@ -13,10 +13,11 @@ public abstract class Employees {
     public static final int IMAGE_WIDTH = 96;
     public static final int IMAGE_HEIGHT = 64;
 
-    private final long createTime;
-    private final String id;
-    private final int x;
-    private final int y;
+    protected long createTime;
+    protected long lifeTime;
+    private String id;
+    private int x;
+    private int y;
     public JLabel LayObject = null; //Слой объе кта который ложится на экран
 
     public long tmp;
@@ -29,6 +30,7 @@ public abstract class Employees {
         this.y = y;
         this.id = generateID();
         this.createTime = System.currentTimeMillis();
+        lifeTime = 2;
     }
 
     public long getLifetime() {
@@ -37,6 +39,10 @@ public abstract class Employees {
 
     public String getId() {
         return id;
+    }
+
+    public void setID(String id) {
+        this.id = id;
     }
 
     public long getCreateTime() {
@@ -60,5 +66,23 @@ public abstract class Employees {
 
         var tmp = new ImageIcon(dimg);
         return tmp;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getX() { return this.x; }
+    public int getY() { return this.y; }
+
+    public void setPosition(int x, int y) {
+        this.x = x;
+        this.y = y;
+        LayObject.setBounds(x,y,100,100);
+        LayObject.setSize(IMAGE_WIDTH, IMAGE_HEIGHT);
     }
 }
