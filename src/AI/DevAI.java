@@ -13,8 +13,8 @@ public class DevAI extends BaseAI {
 
     final int[] operation = {1, 1, 2, 3, 4};
 
-    public DevAI(ArrayList<Employees> objects, Environment context) {
-        super(objects, "DevAI", context);
+    public DevAI(ArrayList<Employees> objects) {
+        super(objects, "DevAI");
         changeOperation();
     }
 
@@ -53,10 +53,8 @@ public class DevAI extends BaseAI {
     @Override
     synchronized void procces() {
         if (objects.size() != 0) {
-
             for (int  i = 0; i < objects.size(); i++) {
                 Employees emp = objects.get(i);
-
                 if (emp instanceof Developer && checkPos(emp)) {
                     Point p = move(emp);
                     emp.setPosition(p.x, p.y);

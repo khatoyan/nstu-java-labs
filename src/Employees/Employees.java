@@ -15,6 +15,7 @@ public abstract class Employees implements IBehaviour {
     public String defaultPath = "src/Images/manager.png";
 
     private final long createTime;
+    private long lifeTime;
     private final String id;
     private int x;
     private int y;
@@ -22,6 +23,14 @@ public abstract class Employees implements IBehaviour {
 
     Employees() {
       this(0, 0);
+    }
+
+    Employees(String id, int x, int y, long createTime, long lifeTime) {
+        this.x = x;
+        this.y = y;
+        this.id = id;
+        this.createTime = createTime;
+        setLifetime(lifeTime);
     }
 
     Employees(int x, int y) {
@@ -39,7 +48,12 @@ public abstract class Employees implements IBehaviour {
     }
 
     public long getLifetime() {
-        return System.currentTimeMillis() - this.createTime;
+        this.lifeTime = System.currentTimeMillis() - this.createTime;
+        return this.lifeTime;
+    }
+
+    public void setLifetime(long lifeTime) {
+        this.lifeTime = lifeTime;
     }
 
     public String getId() {

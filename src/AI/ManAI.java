@@ -8,8 +8,8 @@ import java.util.ListIterator;
 
 public class ManAI extends BaseAI {
 
-    public ManAI(ArrayList<Employees> objects, Environment context) {
-        super(objects, "ManAI", context);
+    public ManAI(ArrayList<Employees> objects) {
+        super(objects, "ManAI");
     }
 
     @Override

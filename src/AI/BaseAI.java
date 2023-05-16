@@ -11,28 +11,24 @@ public abstract class BaseAI extends Thread {
 
     int velocity = 2;
     boolean running = true;
-    private final Environment context;
+    Environment context;
 
     ArrayList<Employees> objects;
 
-    BaseAI(ArrayList<Employees> objects, String threadName, Environment context) {
+    BaseAI(ArrayList<Employees> objects, String threadName) {
         this.objects = objects;
         this.setName(threadName);
-        this.context = context;
     }
 
     @Override
     public void run() {
         while (running) {
             synchronized (this) {
-                context.repaintObjPanel();
                 this.procces();
             }
-            context.repaintObjPanel();
             try {
                 if (paused) synchronized (this) {
                     this.wait();
-                    context.repaintObjPanel();
                 }
                 else sleep(45);
             } catch (InterruptedException e) {

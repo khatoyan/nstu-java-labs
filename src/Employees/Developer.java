@@ -15,6 +15,12 @@ public class Developer extends Employees implements IBehaviour {
         this.LayObject = new JLabel(tmp);
     }
 
+    public Developer(String id, int x, int y, long createTime, long lifeTime) {
+        super(id, x, y, createTime, lifeTime);
+        setImage();
+        setPosition(x,y);
+    }
+
     public Developer() {
         this(0, 0);
     }

@@ -20,6 +20,12 @@ public class Manager extends Employees {
         this(0, 0);
     }
 
+    public Manager(String id, int x, int y, long createTime, long lifeTime) {
+        super(id, x, y, createTime, lifeTime);
+        countMan++;
+        setImage();
+    }
+
     public Manager(int x, int y) {
         super(x, y);
         countMan++;
