@@ -361,6 +361,7 @@ public class Environment
             return -1;
         }
 
+        System.out.println("create\n");
         int rand = (int) Math.ceil(Math.random() * 8);
         int rand2 = (int) Math.ceil(Math.random() * 8);
 
@@ -478,6 +479,8 @@ public class Environment
     void onStop() {
         isAllowed = false;
         simulationTimer.stop();
+        manAI.stopAI();
+        devAI.stopAI();
         emplList.clear();
         hashMap.clear();
         IdList.clear();
@@ -493,6 +496,9 @@ public class Environment
         dataPanel.setVisible(!dataPanel.isVisible());
         isAllowed = true;
         simulationTimer.start();
+        devAI.resumeAI();
+        manAI.resumeAI();
+        System.out.println("onStart");
         generate();
         stopButton.setEnabled(true);
         startButton.setEnabled(false);
@@ -708,6 +714,6 @@ public class Environment
 
     public static void main(String[] args)
     {
-        var beg = new Environment();
+        new Environment();
     }
 }

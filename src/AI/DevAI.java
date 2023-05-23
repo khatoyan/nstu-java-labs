@@ -53,7 +53,6 @@ public class DevAI extends BaseAI {
     @Override
     synchronized void procces() {
         if (objects.size() != 0) {
-            System.out.println(objects.size() + "Size\n");
             for (int i = 0; i < objects.size(); i++) {
                 Employees emp = objects.get(i);
                 if (emp instanceof Developer && checkPos(emp)) {
